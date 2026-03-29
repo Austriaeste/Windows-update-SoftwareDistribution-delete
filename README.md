@@ -30,8 +30,9 @@ OSは「次の起動時にこのファイルを入れ替える」という予約
 
 PS C:\WINDOWS\system32> cd $HOME\OneDrive\デスクトップ
 PS C:\Users\austr\OneDrive\デスクトップ>
-powershell -ExecutionPolicy Bypass -File .\PreCleanup.ps1 -DryRun
+powershell -ExecutionPolicy Bypass -File .\PreCleanup.ps1
 
+<本番用>
 **【スクリプト内容】**
 ```powershell
 # ================================================
@@ -70,5 +71,6 @@ Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore
 Write-Host "`n=== クリーンアップ完了 ===" -ForegroundColor Green
 Stop-Transcript
 ```
-
 以上、よろしくお願いいたします。
+
+
