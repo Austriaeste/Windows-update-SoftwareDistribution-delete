@@ -71,6 +71,81 @@ Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore
 Write-Host "`n=== クリーンアップ完了 ===" -ForegroundColor Green
 Stop-Transcript
 ```
+
+PS C:\WINDOWS\system32> cd $HOME\OneDrive\デスクトップ
+PS C:\Users\austr\OneDrive\デスクトップ>
+powershell -ExecutionPolicy Bypass -File .\test_PreCleanup.ps1 
+
+<試験用>
+**【スクリプト内容】**
+```powershell
+# ================================================
+# ADサーバー 事前クリーンアップスクリプト（DryRun対応版）
+# Windows Update適用前の準備（SoftwareDistribution削除 + DISMクリーンアップ）
+# ================================================
+
+param(
+    [switch]$DryRun   # ← これを付けて実行するとチェックのみ（実際の変更なし）
+)
+
+$TranscriptPath = "C:\Temp\PreCleanup_Transcript_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+
+Start-Transcript -Path $TranscriptPath -Append
+Write-Host "=== Windows Update 事前クリーンアップ開始 ===" -ForegroundColor Green
+
+if ($DryRun) {
+    Write-Host "【DRY RUN MODE】チェックのみ実行します。実際の変更は行いません。" -ForegroundColor Cyan
+}
+
+# 0. 現在の状態を確認（常に実行）
+Write-Host "0. 現在のコンポーネントストア状況を確認しています..." -ForegroundColor Yellow
+Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore
+
+# 1. サービス停止
+Write-Host "1. Windows Update関連サービスを停止しています..." -ForegroundColor Yellow
+if (-not $DryRun) {
+    Stop-Service -Name wuauserv, bits, cryptSvc, msiserver -Force -ErrorAction SilentlyContinue
+} else {
+    Write-Host "   → DryRunのため実際には停止しません" -ForegroundColor Gray
+}
+
+# 2. 更新キャッシュ削除
+Write-Host "2. SoftwareDistribution と Catroot2 をクリアしています..." -ForegroundColor Yellow
+if (-not $DryRun) {
+    Remove-Item -Path "C:\Windows\SoftwareDistribution\*" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path "C:\Windows\System32\catroot2\*" -Recurse -Force -ErrorAction SilentlyContinue
+} else {
+    Write-Host "   → DryRunのため実際には削除しません" -ForegroundColor Gray
+}
+
+# 3. サービス再起動
+Write-Host "3. サービスを再起動しています..." -ForegroundColor Yellow
+if (-not $DryRun) {
+    Start-Service -Name wuauserv, bits, cryptSvc, msiserver -ErrorAction SilentlyContinue
+} else {
+    Write-Host "   → DryRunのため実際には再起動しません" -ForegroundColor Gray
+}
+
+# 4. DISMクリーンアップ（これが一番重い）
+Write-Host "4. DISMクリーンアップを実行しています..." -ForegroundColor Yellow
+if (-not $DryRun) {
+    Dism.exe /Online /Cleanup-Image /StartComponentCleanup
+} else {
+    Write-Host "   → DryRunのため実際にはクリーンアップを実行しません" -ForegroundColor Gray
+}
+
+# 完了確認
+Write-Host "5. クリーンアップ結果を確認しています..." -ForegroundColor Yellow
+Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore
+
+Write-Host "`n=== クリーンアップ完了 ===" -ForegroundColor Green
+if ($DryRun) {
+    Write-Host "【DryRun完了】実際の変更は一切行われていません。" -ForegroundColor Cyan
+}
+Stop-Transcript
+
+Write-Host "詳細ログ: $TranscriptPath" -ForegroundColor Cyan
+```
 以上、よろしくお願いいたします。
 
 
