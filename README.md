@@ -30,8 +30,7 @@ OSは「次の起動時にこのファイルを入れ替える」という予約
 
 PS C:\WINDOWS\system32> cd $HOME\OneDrive\デスクトップ
 PS C:\Users\austr\OneDrive\デスクトップ>
-PS C:\Users\austr\OneDrive\デスクトップ> powershell -ExecutionPolicy Bypass -File .\test_PreCleanup.ps1
-トランスクリプトが開始されました。出力ファイル: C:\Temp\PreCleanup_Transcript_20260329_213624.txt
+powershell -ExecutionPolicy Bypass -File .\PreCleanup.ps1 -DryRun
 
 **【スクリプト内容】**
 ```powershell
